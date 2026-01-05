@@ -1,7 +1,9 @@
 // BSD 3-Clause License
 //
-// Copyright (c) 2019, TIANBOT
+// Copyright (c) 2019-2020, TIANBOT
 // All rights reserved.
+//
+// Modified by JeffreySharp (2026) - ROS2 port from ROS1
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:

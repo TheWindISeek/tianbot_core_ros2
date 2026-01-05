@@ -3,9 +3,11 @@
 <package format="3">
   <name>tianbot_core_ros2</name>
   <version>0.0.0</version>
-  <description>The tianbot_core_ros2 package - ROS2 version for communication with Tianbot base</description>
+  <description>The tianbot_core_ros2 package - ROS2 version for communication with Tianbot base.
+    Ported from ROS1 by JeffreySharp (2026). Original code Copyright (c) 2019-2020, TIANBOT.</description>
 
   <maintainer email="tianbot@todo.todo">tianbot</maintainer>
+  <maintainer email="FAIZ030612@163.com">JeffreySharp</maintainer>
 
   <license>BSD-3-Clause</license>
 
