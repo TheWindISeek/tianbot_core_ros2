@@ -28,7 +28,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "serial.h"
+#include "tianbot_core_ros2/serial.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>

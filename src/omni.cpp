@@ -1,7 +1,7 @@
-#include "omni.h"
-#include "protocol.h"
+#include "tianbot_core_ros2/omni.h"
+#include "tianbot_core_ros2/protocol.h"
 
-void TianbotOmni::velocityCallback(const geometry_msgs::Twist::ConstPtr &msg)
+void TianbotOmni::velocityCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
     uint16_t len;
     vector<uint8_t> buf;
@@ -18,11 +18,12 @@ void TianbotOmni::velocityCallback(const geometry_msgs::Twist::ConstPtr &msg)
     buildCmd(buf, PACK_TYPE_CMD_VEL, (uint8_t *)&twist, sizeof(twist));
     serial_.send(&buf[0], buf.size());
 
-    heartbeat_timer_.stop();
-    heartbeat_timer_.start();
+    heartbeat_timer_->cancel();
+    heartbeat_timer_->reset();
 }
 
-TianbotOmni::TianbotOmni(ros::NodeHandle *nh) : TianbotChasis(nh)
+TianbotOmni::TianbotOmni() : TianbotChasis()
 {
-    cmd_vel_sub_ = nh_.subscribe("cmd_vel", 1, &TianbotOmni::velocityCallback, this);
+    cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+        "cmd_vel", 1, std::bind(&TianbotOmni::velocityCallback, this, std::placeholders::_1));
 }

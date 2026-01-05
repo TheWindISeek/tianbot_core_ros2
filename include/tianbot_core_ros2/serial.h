@@ -33,11 +33,9 @@
 
 #include "stdint.h"
 #include <pthread.h>
-#include "boost/bind.hpp"
-#include "boost/function.hpp"
+#include <functional>
 
-using namespace boost;
-typedef function<void(uint8_t *data, unsigned int data_len)> serial_recv_cb;
+using serial_recv_cb = std::function<void(uint8_t *data, unsigned int data_len)>;
 
 class Serial
 {
