@@ -51,6 +51,7 @@
 #define DEFAULT_IMU_FRAME "imu_link"
 
 #define DEFAULT_PUBLISH_TF true
+#define DEFAULT_YAW_OFFSET_DEG 0.0  // 默认无补偿，单位：度
 
 using namespace std;
 
@@ -68,6 +69,7 @@ private:
     std::string base_frame_;
     std::string odom_frame_;
     std::string imu_frame_;
+    double yaw_offset_rad_;  // yaw补偿值（弧度）
     virtual void tianbotDataProc(unsigned char *buf, int len);
 };
 

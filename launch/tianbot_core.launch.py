@@ -32,6 +32,11 @@ def generate_launch_description():
             default_value='true',
             description='Publish TF transforms'
         ),
+        DeclareLaunchArgument(
+            'yaw_offset_deg',
+            default_value='0.0',
+            description='Odom yaw offset in degrees (for steering calibration)'
+        ),
         Node(
             package='tianbot_core_ros2',
             executable='tianbot_core_ros2_node',
@@ -43,6 +48,7 @@ def generate_launch_description():
                 'type': LaunchConfiguration('type'),
                 'type_verify': LaunchConfiguration('type_verify'),
                 'publish_tf': LaunchConfiguration('publish_tf'),
+                'yaw_offset_deg': LaunchConfiguration('yaw_offset_deg'),
             }]
         ),
     ])

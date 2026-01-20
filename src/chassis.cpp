@@ -33,6 +33,7 @@
 #include "tianbot_core_ros2/chassis.h"
 #include "tianbot_core_ros2/protocol.h"
 #include <tf2/LinearMath/Quaternion.h>
+#include <cmath>
 
 void TianbotChasis::tianbotDataProc(unsigned char *buf, int len)
 {
@@ -51,10 +52,11 @@ void TianbotChasis::tianbotDataProc(unsigned char *buf, int len)
             odom_msg.pose.pose.position.x = pOdom->pose.point.x;
             odom_msg.pose.pose.position.y = pOdom->pose.point.y;
             odom_msg.pose.pose.position.z = pOdom->pose.point.z;
-            
-            // Convert yaw to quaternion
+
+            // Convert yaw to quaternion (with offset compensation)
+            double corrected_yaw = pOdom->pose.yaw + yaw_offset_rad_;
             tf2::Quaternion q;
-            q.setRPY(0, 0, pOdom->pose.yaw);
+            q.setRPY(0, 0, corrected_yaw);
             odom_msg.pose.pose.orientation.x = q.x();
             odom_msg.pose.pose.orientation.y = q.y();
             odom_msg.pose.pose.orientation.z = q.z();
@@ -147,11 +149,20 @@ TianbotChasis::TianbotChasis() : TianbotCore()
     this->declare_parameter<std::string>("odom_frame", DEFAULT_ODOM_FRAME);
     this->declare_parameter<std::string>("imu_frame", DEFAULT_IMU_FRAME);
     this->declare_parameter<bool>("publish_tf", DEFAULT_PUBLISH_TF);
-    
+    this->declare_parameter<double>("yaw_offset_deg", DEFAULT_YAW_OFFSET_DEG);
+
     this->get_parameter("base_frame", base_frame_);
     this->get_parameter("odom_frame", odom_frame_);
     this->get_parameter("imu_frame", imu_frame_);
     this->get_parameter("publish_tf", publish_tf_);
+
+    double yaw_offset_deg;
+    this->get_parameter("yaw_offset_deg", yaw_offset_deg);
+    yaw_offset_rad_ = yaw_offset_deg * M_PI / 180.0;
+
+    if (yaw_offset_deg != 0.0) {
+        RCLCPP_INFO(this->get_logger(), "Odom yaw offset: %.2f deg (%.4f rad)", yaw_offset_deg, yaw_offset_rad_);
+    }
 
     odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 1);
     imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("imu", 1);
