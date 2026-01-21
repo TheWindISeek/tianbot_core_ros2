@@ -51,5 +51,11 @@ def generate_launch_description():
                 'yaw_offset_deg': LaunchConfiguration('yaw_offset_deg'),
             }]
         ),
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='base_link_lidar_broadcaster',
+            arguments=['0.20', '0.0', '0.15', '0.0', '0.0', '0.0', 'base_link', 'lidar']
+        ),
     ])
 
