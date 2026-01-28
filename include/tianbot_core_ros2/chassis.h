@@ -52,6 +52,7 @@
 
 #define DEFAULT_PUBLISH_TF true
 #define DEFAULT_YAW_OFFSET_DEG 0.0  // 默认无补偿，单位：度
+#define DEFAULT_YAW_SCALE 1.0       // yaw缩放因子，用于修正转弯角度误差
 
 using namespace std;
 
@@ -70,6 +71,15 @@ private:
     std::string odom_frame_;
     std::string imu_frame_;
     double yaw_offset_rad_;  // yaw补偿值（弧度）
+    double yaw_scale_;       // yaw缩放因子
+    double initial_yaw_;     // 初始yaw值（用于缩放计算）
+    bool yaw_initialized_;   // 是否已初始化
+
+    // 参数回调句柄
+    rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
+    rcl_interfaces::msg::SetParametersResult onParameterChange(
+        const std::vector<rclcpp::Parameter> &parameters);
+
     virtual void tianbotDataProc(unsigned char *buf, int len);
 };
 

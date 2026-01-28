@@ -33,6 +33,7 @@
 #include "tianbot_core_ros2/chassis.h"
 #include "tianbot_core_ros2/protocol.h"
 #include <tf2/LinearMath/Quaternion.h>
+#include <rcl_interfaces/msg/set_parameters_result.hpp>
 #include <cmath>
 
 void TianbotChasis::tianbotDataProc(unsigned char *buf, int len)
@@ -53,8 +54,18 @@ void TianbotChasis::tianbotDataProc(unsigned char *buf, int len)
             odom_msg.pose.pose.position.y = pOdom->pose.point.y;
             odom_msg.pose.pose.position.z = pOdom->pose.point.z;
 
-            // Convert yaw to quaternion (with offset compensation)
-            double corrected_yaw = pOdom->pose.yaw + yaw_offset_rad_;
+            // Convert yaw to quaternion (with scale and offset compensation)
+            double raw_yaw = pOdom->pose.yaw;
+
+            // Apply yaw scaling to correct turning angle error
+            // scaled_yaw = initial_yaw + (raw_yaw - initial_yaw) * scale
+            if (!yaw_initialized_) {
+                initial_yaw_ = raw_yaw;
+                yaw_initialized_ = true;
+            }
+            double scaled_yaw = initial_yaw_ + (raw_yaw - initial_yaw_) * yaw_scale_;
+            double corrected_yaw = scaled_yaw + yaw_offset_rad_;
+
             tf2::Quaternion q;
             q.setRPY(0, 0, corrected_yaw);
             odom_msg.pose.pose.orientation.x = q.x();
@@ -150,6 +161,7 @@ TianbotChasis::TianbotChasis() : TianbotCore()
     this->declare_parameter<std::string>("imu_frame", DEFAULT_IMU_FRAME);
     this->declare_parameter<bool>("publish_tf", DEFAULT_PUBLISH_TF);
     this->declare_parameter<double>("yaw_offset_deg", DEFAULT_YAW_OFFSET_DEG);
+    this->declare_parameter<double>("yaw_scale", DEFAULT_YAW_SCALE);
 
     this->get_parameter("base_frame", base_frame_);
     this->get_parameter("odom_frame", odom_frame_);
@@ -159,9 +171,15 @@ TianbotChasis::TianbotChasis() : TianbotCore()
     double yaw_offset_deg;
     this->get_parameter("yaw_offset_deg", yaw_offset_deg);
     yaw_offset_rad_ = yaw_offset_deg * M_PI / 180.0;
+    this->get_parameter("yaw_scale", yaw_scale_);
+    yaw_initialized_ = false;
+    initial_yaw_ = 0.0;
 
     if (yaw_offset_deg != 0.0) {
         RCLCPP_INFO(this->get_logger(), "Odom yaw offset: %.2f deg (%.4f rad)", yaw_offset_deg, yaw_offset_rad_);
+    }
+    if (yaw_scale_ != 1.0) {
+        RCLCPP_INFO(this->get_logger(), "Odom yaw scale: %.4f (use this to correct turning angle error)", yaw_scale_);
     }
 
     odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 1);
@@ -171,4 +189,28 @@ TianbotChasis::TianbotChasis() : TianbotCore()
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     odom_tf_.header.frame_id = odom_frame_;
     odom_tf_.child_frame_id = base_frame_;
+
+    // 注册参数动态修改回调
+    param_callback_handle_ = this->add_on_set_parameters_callback(
+        std::bind(&TianbotChasis::onParameterChange, this, std::placeholders::_1));
+}
+
+rcl_interfaces::msg::SetParametersResult TianbotChasis::onParameterChange(
+    const std::vector<rclcpp::Parameter> &parameters)
+{
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+
+    for (const auto &param : parameters) {
+        if (param.get_name() == "yaw_scale") {
+            yaw_scale_ = param.as_double();
+            RCLCPP_INFO(this->get_logger(), "yaw_scale updated to: %.4f", yaw_scale_);
+        } else if (param.get_name() == "yaw_offset_deg") {
+            double yaw_offset_deg = param.as_double();
+            yaw_offset_rad_ = yaw_offset_deg * M_PI / 180.0;
+            RCLCPP_INFO(this->get_logger(), "yaw_offset_deg updated to: %.2f deg", yaw_offset_deg);
+        }
+    }
+
+    return result;
 }

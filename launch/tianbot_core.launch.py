@@ -37,6 +37,11 @@ def generate_launch_description():
             default_value='0.0',
             description='Odom yaw offset in degrees (for steering calibration)'
         ),
+        DeclareLaunchArgument(
+            'yaw_scale',
+            default_value='1.0',
+            description='Odom yaw scale factor to correct turning angle error'
+        ),
         Node(
             package='tianbot_core_ros2',
             executable='tianbot_core_ros2_node',
@@ -49,6 +54,7 @@ def generate_launch_description():
                 'type_verify': LaunchConfiguration('type_verify'),
                 'publish_tf': LaunchConfiguration('publish_tf'),
                 'yaw_offset_deg': LaunchConfiguration('yaw_offset_deg'),
+                'yaw_scale': LaunchConfiguration('yaw_scale'),
             }]
         ),
         Node(
